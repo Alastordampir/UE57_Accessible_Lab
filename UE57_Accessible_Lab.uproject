@@ -1,0 +1,13 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.7",
+  "Category": "",
+  "Description": "Laboratorio Unreal accessibile",
+  "Modules": [
+    {
+      "Name": "UE57_Accessible_Lab",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}
