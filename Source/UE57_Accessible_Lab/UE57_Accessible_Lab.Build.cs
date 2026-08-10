@@ -10,6 +10,7 @@ public class UE57_Accessible_Lab : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
+                "GameplayTags",
                 "InputCore"
             }
         );
