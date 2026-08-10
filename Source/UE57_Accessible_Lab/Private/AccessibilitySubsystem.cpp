@@ -9,7 +9,17 @@ int32 UAccessibilitySubsystem::ValidChannelMask()
 
 bool UAccessibilitySubsystem::IsConcreteMode(const EAccessibilityGameplayMode GameplayMode)
 {
-	return GameplayMode != EAccessibilityGameplayMode::Any;
+	switch (GameplayMode)
+	{
+	case EAccessibilityGameplayMode::Exploration:
+	case EAccessibilityGameplayMode::Combat:
+	case EAccessibilityGameplayMode::Dialogue:
+	case EAccessibilityGameplayMode::Menu:
+		return true;
+	case EAccessibilityGameplayMode::Any:
+	default:
+		return false;
+	}
 }
 
 bool UAccessibilitySubsystem::GetEffectivePreference(const FGameplayTag Category, const EAccessibilityGameplayMode GameplayMode,
@@ -63,7 +73,8 @@ bool UAccessibilitySubsystem::SubmitAnnouncement(const FAccessibilityAnnouncemen
 
 bool UAccessibilitySubsystem::SetCategoryPreference(const FAccessibilityCategoryPreference& Preference)
 {
-	if (!Preference.Category.IsValid()) return false;
+	if (!Preference.Category.IsValid()
+		|| (Preference.GameplayMode != EAccessibilityGameplayMode::Any && !IsConcreteMode(Preference.GameplayMode))) return false;
 	for (FAccessibilityCategoryPreference& Existing : RuntimePreferences)
 	{
 		if (Existing.Category == Preference.Category && Existing.GameplayMode == Preference.GameplayMode)

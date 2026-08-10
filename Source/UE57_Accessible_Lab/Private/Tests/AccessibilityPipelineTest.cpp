@@ -108,10 +108,16 @@ bool FPipelineAccessibleObjectTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPipelineInvalidInputsTest, "UE57AccessibleLab.Accessibility.Pipeline.InvalidInputs", Flags)
 bool FPipelineInvalidInputsTest::RunTest(const FString& Parameters)
 {
+	const EAccessibilityGameplayMode InvalidMode = static_cast<EAccessibilityGameplayMode>(255);
 	UAccessibilitySubsystem* Subject = Subsystem(); FAccessibilityAnnouncement Filtered; auto Value = Event(); Value.Message = FText::GetEmpty(); TestFalse(TEXT("Empty message is rejected"), Subject->WouldPassFilters(Value, Filtered));
 	Value = Event(); Value.Category = FGameplayTag(); TestFalse(TEXT("Invalid category is rejected"), Subject->WouldPassFilters(Value, Filtered));
 	Value = Event(); Value.AvailableChannels = 0; TestFalse(TEXT("No channels is rejected"), Subject->WouldPassFilters(Value, Filtered));
 	Value = Event(); Value.GameplayMode = EAccessibilityGameplayMode::Any; TestFalse(TEXT("Any gameplay mode is rejected for announcements"), Subject->WouldPassFilters(Value, Filtered));
+	Value = Event(); Value.GameplayMode = InvalidMode; TestFalse(TEXT("Out-of-range gameplay mode is rejected for announcements"), Subject->WouldPassFilters(Value, Filtered));
+	auto ExistingPreference = Preference(TEXT("Accessibility.Interaction")); ExistingPreference.bCategoryEnabled = false; TestTrue(TEXT("Any gameplay mode remains valid for preferences"), Subject->SetCategoryPreference(ExistingPreference));
+	auto InvalidPreference = ExistingPreference; InvalidPreference.GameplayMode = InvalidMode; InvalidPreference.bCategoryEnabled = true; TestFalse(TEXT("Out-of-range gameplay mode is rejected for preferences"), Subject->SetCategoryPreference(InvalidPreference));
+	FAccessibilityCategoryPreference EffectivePreference; TestTrue(TEXT("Existing preference remains available after invalid preference"), Subject->GetEffectivePreference(Tag(TEXT("Accessibility.Interaction.Available")), EAccessibilityGameplayMode::Exploration, EffectivePreference));
+	TestFalse(TEXT("Invalid preference does not alter runtime preference state"), EffectivePreference.bCategoryEnabled);
 	TestFalse(TEXT("Null component is rejected"), Subject->SubmitAccessibleObject(nullptr, Tag(TEXT("Accessibility.Interaction")), EAccessibilityPriority::Normal, EAccessibilityGameplayMode::Exploration, Voice, NAME_None));
 	UAccessibleObjectComponent* Disabled = NewObject<UAccessibleObjectComponent>(); Disabled->AccessibleName = FText::FromString(TEXT("Disabled")); Disabled->bAccessibilityEnabled = false;
 	TestFalse(TEXT("Disabled component is rejected"), Subject->SubmitAccessibleObject(Disabled, Tag(TEXT("Accessibility.Interaction")), EAccessibilityPriority::Normal, EAccessibilityGameplayMode::Exploration, Voice, NAME_None)); return true;
@@ -120,9 +126,11 @@ bool FPipelineInvalidInputsTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPipelineRejectedNoEmissionTest, "UE57AccessibleLab.Accessibility.Pipeline.RejectedNoEmission", Flags)
 bool FPipelineRejectedNoEmissionTest::RunTest(const FString& Parameters)
 {
+	const EAccessibilityGameplayMode InvalidMode = static_cast<EAccessibilityGameplayMode>(255);
 	UAccessibilitySubsystem* Subject = Subsystem(); int32 Count = 0; Subject->OnAnnouncementNative().AddLambda([&](const FAccessibilityAnnouncement&) { ++Count; });
 	auto Value = Event(); Value.AvailableChannels = 0; TestFalse(TEXT("Rejected request reports failure"), Subject->SubmitAnnouncement(Value));
 	Value = Event(); Value.GameplayMode = EAccessibilityGameplayMode::Any; TestFalse(TEXT("Announcement with Any gameplay mode is not submitted"), Subject->SubmitAnnouncement(Value));
+	Value = Event(); Value.GameplayMode = InvalidMode; TestFalse(TEXT("Announcement with out-of-range gameplay mode is not submitted"), Subject->SubmitAnnouncement(Value));
 	TestEqual(TEXT("Rejected requests emit nothing"), Count, 0); return true;
 }
 
