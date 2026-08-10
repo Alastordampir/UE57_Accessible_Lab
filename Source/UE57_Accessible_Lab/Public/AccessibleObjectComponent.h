@@ -1,21 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AccessibleObjectCatalog.h"
 #include "Components/ActorComponent.h"
+#include "Engine/DataTable.h"
 #include "AccessibleObjectComponent.generated.h"
-
-/** Semantic role used to identify an accessible object. */
-UENUM(BlueprintType)
-enum class EAccessibleObjectCategory : uint8
-{
-	Unknown,
-	Objective,
-	Interactable,
-	Enemy,
-	Ally,
-	Hazard,
-	Landmark
-};
 
 /** Supplies player-facing accessibility metadata for an Actor. */
 UCLASS(ClassGroup = (Accessibility), meta = (BlueprintSpawnableComponent))
@@ -53,4 +42,12 @@ public:
 	/** Returns whether this object is enabled for accessibility systems. */
 	UFUNCTION(BlueprintPure, Category = "Accessibility")
 	bool IsAvailableForAccessibility() const;
+
+	/** Atomically replaces this component's metadata when the catalog row is valid. */
+	UFUNCTION(BlueprintCallable, Category = "Accessibility|Catalog")
+	bool ApplyCatalogRow(const FAccessibleObjectCatalogRow& Row);
+
+	/** Finds and atomically applies a valid row from an Unreal Data Table. */
+	UFUNCTION(BlueprintCallable, Category = "Accessibility|Catalog")
+	bool LoadFromCatalog(const FDataTableRowHandle& RowHandle);
 };

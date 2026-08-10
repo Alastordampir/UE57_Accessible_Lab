@@ -1,0 +1,4 @@
+Name,AccessibleName,AccessibleDescription,Category,NavigationPriority,bAccessibilityEnabled
+PrototypeSword,Spada del prototipo,Raccogli la spada per provarne l'interazione.,Interactable,70,true
+TrainingEnemy,Nemico di prova,Un avversario usato per l'addestramento.,Enemy,80,true
+QuestDestination,Destinazione della missione,Raggiungi questo obiettivo per proseguire.,Objective,90,true
