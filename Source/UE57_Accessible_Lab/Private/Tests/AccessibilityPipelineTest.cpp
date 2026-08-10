@@ -3,6 +3,7 @@
 #include "Misc/AutomationTest.h"
 #include "AccessibilitySubsystem.h"
 #include "AccessibleObjectComponent.h"
+#include "Engine/GameInstance.h"
 
 namespace AccessibilityPipelineTests
 {
@@ -12,7 +13,11 @@ constexpr int32 Haptics = static_cast<int32>(EAccessibilityOutputChannel::Haptic
 constexpr int32 Visual = static_cast<int32>(EAccessibilityOutputChannel::Visual);
 
 FGameplayTag Tag(const TCHAR* Name) { return FGameplayTag::RequestGameplayTag(FName(Name)); }
-UAccessibilitySubsystem* Subsystem() { return NewObject<UAccessibilitySubsystem>(); }
+UAccessibilitySubsystem* Subsystem()
+{
+	UGameInstance* GameInstance = NewObject<UGameInstance>();
+	return NewObject<UAccessibilitySubsystem>(GameInstance);
+}
 FAccessibilityAnnouncement Event(const TCHAR* Category = TEXT("Accessibility.Interaction.Available"))
 {
 	FAccessibilityAnnouncement Value;
