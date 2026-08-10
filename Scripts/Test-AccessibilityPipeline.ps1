@@ -83,7 +83,7 @@ try {
     }
 
     $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
-    $reportedTests = @($report.tests)
+    $reportedTests = if ($null -eq $report.tests) { @() } else { @($report.tests) }
 
     if ($reportedTests.Count -ne $expectedTests.Count) {
         throw "Numero di test eseguiti non valido: attesi $($expectedTests.Count), trovati $($reportedTests.Count)."

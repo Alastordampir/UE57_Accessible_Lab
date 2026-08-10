@@ -43,6 +43,7 @@ bool FPipelineTransmissionTest::RunTest(const FString& Parameters)
 	const FAccessibilityAnnouncement Sent = Event(); TestTrue(TEXT("Valid announcement is accepted"), Subject->SubmitAnnouncement(Sent));
 	TestEqual(TEXT("Message is unchanged"), Received.Message.ToString(), Sent.Message.ToString()); TestEqual(TEXT("Category is unchanged"), Received.Category, Sent.Category);
 	TestEqual(TEXT("Priority is unchanged"), Received.Priority, Sent.Priority); TestEqual(TEXT("Mode is unchanged"), Received.GameplayMode, Sent.GameplayMode);
+	TestEqual(TEXT("Available channels are unchanged"), Received.AvailableChannels, Sent.AvailableChannels);
 	TestEqual(TEXT("SourceId is unchanged"), Received.SourceId, Sent.SourceId); return true;
 }
 
@@ -79,9 +80,12 @@ bool FPipelineModeOverrideTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPipelineChannelFilteringTest, "UE57AccessibleLab.Accessibility.Pipeline.ChannelFiltering", Flags)
 bool FPipelineChannelFilteringTest::RunTest(const FString& Parameters)
 {
-	UAccessibilitySubsystem* Subject = Subsystem(); auto Rule = Preference(TEXT("Accessibility")); Rule.EnabledChannels = Voice | Haptics; Subject->SetCategoryPreference(Rule);
+	UAccessibilitySubsystem* Subject = Subsystem(); int32 Count = 0; Subject->OnAnnouncementNative().AddLambda([&](const FAccessibilityAnnouncement&) { ++Count; });
+	auto Rule = Preference(TEXT("Accessibility")); Rule.EnabledChannels = Voice | Haptics; Subject->SetCategoryPreference(Rule);
 	FAccessibilityAnnouncement Filtered; TestTrue(TEXT("One available enabled channel permits event"), Subject->WouldPassFilters(Event(), Filtered));
-	TestEqual(TEXT("Final channels are the intersection"), Filtered.AvailableChannels, Voice); return true;
+	TestEqual(TEXT("Filter evaluation returns the announcement message"), Filtered.Message.ToString(), Event().Message.ToString());
+	TestEqual(TEXT("Final channels are the intersection"), Filtered.AvailableChannels, Voice);
+	TestEqual(TEXT("Filter evaluation does not emit an announcement"), Count, 0); return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPipelineMinimumPriorityTest, "UE57AccessibleLab.Accessibility.Pipeline.MinimumPriority", Flags)
@@ -107,6 +111,7 @@ bool FPipelineInvalidInputsTest::RunTest(const FString& Parameters)
 	UAccessibilitySubsystem* Subject = Subsystem(); FAccessibilityAnnouncement Filtered; auto Value = Event(); Value.Message = FText::GetEmpty(); TestFalse(TEXT("Empty message is rejected"), Subject->WouldPassFilters(Value, Filtered));
 	Value = Event(); Value.Category = FGameplayTag(); TestFalse(TEXT("Invalid category is rejected"), Subject->WouldPassFilters(Value, Filtered));
 	Value = Event(); Value.AvailableChannels = 0; TestFalse(TEXT("No channels is rejected"), Subject->WouldPassFilters(Value, Filtered));
+	Value = Event(); Value.GameplayMode = EAccessibilityGameplayMode::Any; TestFalse(TEXT("Any gameplay mode is rejected for announcements"), Subject->WouldPassFilters(Value, Filtered));
 	TestFalse(TEXT("Null component is rejected"), Subject->SubmitAccessibleObject(nullptr, Tag(TEXT("Accessibility.Interaction")), EAccessibilityPriority::Normal, EAccessibilityGameplayMode::Exploration, Voice, NAME_None));
 	UAccessibleObjectComponent* Disabled = NewObject<UAccessibleObjectComponent>(); Disabled->AccessibleName = FText::FromString(TEXT("Disabled")); Disabled->bAccessibilityEnabled = false;
 	TestFalse(TEXT("Disabled component is rejected"), Subject->SubmitAccessibleObject(Disabled, Tag(TEXT("Accessibility.Interaction")), EAccessibilityPriority::Normal, EAccessibilityGameplayMode::Exploration, Voice, NAME_None)); return true;
@@ -116,7 +121,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPipelineRejectedNoEmissionTest, "UE57Accessibl
 bool FPipelineRejectedNoEmissionTest::RunTest(const FString& Parameters)
 {
 	UAccessibilitySubsystem* Subject = Subsystem(); int32 Count = 0; Subject->OnAnnouncementNative().AddLambda([&](const FAccessibilityAnnouncement&) { ++Count; });
-	auto Value = Event(); Value.AvailableChannels = 0; TestFalse(TEXT("Rejected request reports failure"), Subject->SubmitAnnouncement(Value)); TestEqual(TEXT("Rejected request emits nothing"), Count, 0); return true;
+	auto Value = Event(); Value.AvailableChannels = 0; TestFalse(TEXT("Rejected request reports failure"), Subject->SubmitAnnouncement(Value));
+	Value = Event(); Value.GameplayMode = EAccessibilityGameplayMode::Any; TestFalse(TEXT("Announcement with Any gameplay mode is not submitted"), Subject->SubmitAnnouncement(Value));
+	TestEqual(TEXT("Rejected requests emit nothing"), Count, 0); return true;
 }
 
 #endif
