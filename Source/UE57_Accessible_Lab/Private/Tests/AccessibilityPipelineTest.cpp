@@ -33,7 +33,7 @@ FAccessibilityCategoryPreference Preference(const TCHAR* Category, EAccessibilit
 }
 
 using namespace AccessibilityPipelineTests;
-constexpr uint32 Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
+constexpr EAutomationTestFlags Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPipelineTransmissionTest, "UE57AccessibleLab.Accessibility.Pipeline.Transmission", Flags)
 bool FPipelineTransmissionTest::RunTest(const FString& Parameters)
