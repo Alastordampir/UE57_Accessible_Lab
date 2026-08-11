@@ -1,4 +1,5 @@
 #include "AccessibleObjectComponent.h"
+#include "AccessibleObjectCatalog.h"
 
 #define LOCTEXT_NAMESPACE "AccessibleObjectComponent"
 
@@ -31,6 +32,42 @@ FText UAccessibleObjectComponent::GetAccessibleAnnouncement() const
 bool UAccessibleObjectComponent::IsAvailableForAccessibility() const
 {
 	return bAccessibilityEnabled;
+}
+
+bool UAccessibleObjectComponent::ApplyCatalogRow(const FAccessibleObjectCatalogRow& Row)
+{
+	if (!Row.IsValid())
+	{
+		return false;
+	}
+
+	AccessibleName = Row.AccessibleName;
+	AccessibleDescription = Row.AccessibleDescription;
+	Category = Row.Category;
+	NavigationPriority = Row.NavigationPriority;
+	bAccessibilityEnabled = Row.bAccessibilityEnabled;
+	return true;
+}
+
+bool UAccessibleObjectComponent::LoadFromCatalog(const FDataTableRowHandle& RowHandle)
+{
+	if (RowHandle.DataTable == nullptr || RowHandle.RowName.IsNone())
+	{
+		return false;
+	}
+
+	// UDataTable::FindRow logs an error when the table has no row struct, and that log is not
+	// silenced by bWarnIfRowMissing. A handle can reference any table, so the row struct has to
+	// be checked here to keep an ordinary rejection quiet.
+	const UScriptStruct* RowStruct = RowHandle.DataTable->GetRowStruct();
+	if (RowStruct == nullptr || !RowStruct->IsChildOf(FAccessibleObjectCatalogRow::StaticStruct()))
+	{
+		return false;
+	}
+
+	const FAccessibleObjectCatalogRow* Row = RowHandle.DataTable->FindRow<FAccessibleObjectCatalogRow>(
+		RowHandle.RowName, TEXT("AccessibleObjectCatalog"), false);
+	return Row != nullptr && ApplyCatalogRow(*Row);
 }
 
 #undef LOCTEXT_NAMESPACE
