@@ -97,9 +97,15 @@ try {
     $failedCount = [int]$report.failed
     $notRunCount = [int]$report.notRun
     $inProcessCount = [int]$report.inProcess
-    $successfulCount = [int]$report.succeeded + [int]$report.succeededWithWarnings
+    $warningCount = [int]$report.succeededWithWarnings
+    $successfulCount = [int]$report.succeeded + $warningCount
     if ($failedCount -ne 0 -or $notRunCount -ne 0 -or $inProcessCount -ne 0 -or $successfulCount -ne $expectedTests.Count) {
         throw "Riepilogo report non valido: superati=$successfulCount, falliti=$failedCount, non eseguiti=$notRunCount, incompleti=$inProcessCount."
+    }
+
+    # I rifiuti del catalogo devono restare silenziosi: nessun warning e ammesso.
+    if ($warningCount -ne 0) {
+        throw "Il catalogo ha prodotto warning inattesi in $warningCount test."
     }
 
     if ($editorExitCode -ne 0) {
