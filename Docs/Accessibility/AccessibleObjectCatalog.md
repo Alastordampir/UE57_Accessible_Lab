@@ -8,6 +8,8 @@ Il catalogo raccoglie i metadati statici e revisionabili che descrivono gli ogge
 
 `ApplyCatalogRow` e `LoadFromCatalog` applicano insieme nome, descrizione, categoria, priorità di navigazione e abilitazione. Prima dell'assegnazione viene validata l'intera riga: un errore restituisce `false` e lascia invariati tutti e cinque i campi. Il catalogo non carica il CSV grezzo durante il gioco e questa fondazione non richiede un'importazione manuale nell'Editor.
 
+`LoadFromCatalog` accetta un `FDataTableRowHandle` generico, quindi verifica la tabella prima di interrogarla: tabella nulla, `RowName` pari a `None` e tabella la cui struttura di riga non deriva da `FAccessibleObjectCatalogRow` (compresa una tabella senza struttura) vengono rifiutate subito. Il controllo precede `FindRow` perché la funzione del motore registrerebbe un errore di log per una tabella priva di struttura di riga: un rifiuto ordinario deve restare silenzioso.
+
 ## Formato CSV
 
 L'intestazione deve restare, nello stesso ordine:

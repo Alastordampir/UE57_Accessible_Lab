@@ -56,6 +56,15 @@ bool UAccessibleObjectComponent::LoadFromCatalog(const FDataTableRowHandle& RowH
 		return false;
 	}
 
+	// UDataTable::FindRow logs an error when the table has no row struct, and that log is not
+	// silenced by bWarnIfRowMissing. A handle can reference any table, so the row struct has to
+	// be checked here to keep an ordinary rejection quiet.
+	const UScriptStruct* RowStruct = RowHandle.DataTable->GetRowStruct();
+	if (RowStruct == nullptr || !RowStruct->IsChildOf(FAccessibleObjectCatalogRow::StaticStruct()))
+	{
+		return false;
+	}
+
 	const FAccessibleObjectCatalogRow* Row = RowHandle.DataTable->FindRow<FAccessibleObjectCatalogRow>(
 		RowHandle.RowName, TEXT("AccessibleObjectCatalog"), false);
 	return Row != nullptr && ApplyCatalogRow(*Row);
